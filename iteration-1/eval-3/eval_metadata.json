@@ -1,0 +1,6 @@
+{
+  "eval_id": 3,
+  "eval_name": "monorepo-mixed",
+  "prompt": "帮我从我的 Claude Code 开发记录里整理面试题，我的项目是个 monorepo，用了 Turborepo + Next.js 14 + Prisma + tRPC，还有一些 Agent 工具，项目目录是 /Users/me/work/saas-platform",
+  "assertions": []
+}

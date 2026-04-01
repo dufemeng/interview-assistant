@@ -1,0 +1,6 @@
+{
+  "eval_id": 1,
+  "eval_name": "video-script-agent-chinese",
+  "prompt": "我刚用 Claude Code 开发完一个视频脚本生成 Agent，用了 LangChain.js + BullMQ + NestJS，下周要面试字节跳动的高级前端工程师职位，帮我从我的 claude 记录里准备面试题，项目在 ~/projects/video-script-agent",
+  "assertions": []
+}
