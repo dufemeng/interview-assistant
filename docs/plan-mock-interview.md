@@ -143,7 +143,7 @@ Claude Code 读文件时整文加载 context，无法做真正的延迟加载。
 | `extracted_decisions.md` | Step 1（脚本） | Session 决策提炼 |
 | `code_summary.md` | Step 1（脚本） | 代码架构摘要 |
 | `project_knowledge_graph.md` | Step 2（01 prompt） | 知识图谱，含置信度 |
-| `interview_questions.md` | Step 2（02 prompt） | 25 道定制面试题 + 评分要点 |
+| `interview_questions.md` | Step 2（02 prompt） | D×5 道定制面试题 + 评分要点（每决策：基础确认题×1、追问×3、扩展场景题×1）|
 | `story_cards.md` | Step 2（03 prompt） | 5 张 STAR 故事卡 |
 | `mock_interview_summary.md` | Step 3（增量写入） | 模拟面试评分记录 + 总结 |
 
