@@ -21,36 +21,39 @@ description: Generates personalized technical interview questions and STAR story
 
 ## 工作流程
 
-### Step 1 — 确认输入
-
-询问用户：
-
-1. **项目目录路径**（可选）：`/path/to/your/project`。如果用户未提供，默认使用当前目录（Claude Code 打开的项目根目录）。
-2. **目标职级**：资深前端 / 全栈工程师 / Agent 工程师
-3. **目标 JD**（可选）：是否有招聘描述文本？
-
-如果用户未提供路径，直接进入 Step 2，脚本会自动使用当前目录。
-
----
-
-### Step 2 — 自动提取（运行脚本）
+### Step 1 — 自动提取（运行脚本）
 
 使用 Bash 工具运行提取脚本：
 
 ```bash
-bash {SKILL_DIR}/scripts/run.sh <project_path>
+bash {SKILL_DIR}/scripts/run.sh
+```
+
+如果用户在消息中提供了项目路径，带上路径参数：
+
+```bash
+bash {SKILL_DIR}/scripts/run.sh /path/to/your/project
 ```
 
 **执行后验证**：
 - 检查脚本输出中的 JSON 结果，确认 `.interview-docs/extracted_decisions.md` 和 `.interview-docs/code_summary.md` 已生成
 - 如果 session 数据量很大（>200MB 或提取时间超过 60 秒），建议用户：
   ```bash
-  bash {SKILL_DIR}/scripts/run.sh <project_path> --days 14 --max-files 10
+  bash {SKILL_DIR}/scripts/run.sh --days 14 --max-files 10
   ```
 
 **边界处理**：
 - 若 `.interview-docs/extracted_decisions.md` < 5KB：提示用户 "Session 数据较少，知识图谱将主要依赖代码摘要"
-- 若 `code_summary.md` 未生成：检查项目路径是否正确、项目是否包含可识别文件
+- 若 `.interview-docs/code_summary.md` 未生成：检查项目路径是否正确、项目是否包含可识别文件
+
+---
+
+### Step 2 — 确认目标
+
+询问用户：
+
+1. **目标职级**：资深前端 / 全栈工程师 / Agent 工程师
+2. **目标 JD**（可选）：是否有招聘描述文本？
 
 ---
 

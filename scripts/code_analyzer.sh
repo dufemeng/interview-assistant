@@ -46,7 +46,7 @@ echo "  📁 Extracting directory structure..."
       -not -path '*/.next/*' \
       -not -path '*/dist/*' \
       -not -path '*/.turbo/*' \
-      | head -150
+      | head -150 || true
   fi
   echo '```'
   echo ""
@@ -145,10 +145,10 @@ if [ -d "$PROJECT_DIR/src" ]; then
     } >> "$OUTPUT"
   done < <(
     find "$PROJECT_DIR/src" \
-      -name "index.ts" -o -name "index.js" \
+      \( -name "index.ts" -o -name "index.js" \) \
       -not -path "*/node_modules/*" \
       2>/dev/null \
-      | head -15
+      | head -15 || true
   )
 fi
 

@@ -18,7 +18,7 @@ import os from 'os';
 
 // ── 配置（可通过环境变量或命令行参数覆盖）────────────────────────────────────
 const SESSION_DIR = process.env.SESSION_DIR
-  ?? path.join(os.homedir(), '.claude', 'projects');
+  || path.join(os.homedir(), '.claude', 'projects');
 const OUTPUT_FILE = process.env.OUTPUT_FILE ?? 'extracted_decisions.md';
 
 // 解析命令行参数 --days / --max-files
@@ -55,8 +55,15 @@ async function loadJsonl(filepath) {
       continue;
     }
 
-    const role = obj.role ?? '';
-    let content = obj.content ?? '';
+    // 兼容 Claude Code CLI v2.1+ 的外层 wrapper 格式：
+    // { type, message: { role, content }, timestamp }（新格式）
+    // { role, content, timestamp }（旧格式）
+    const msgObj = obj.message && (obj.message.role || obj.message.content)
+      ? obj.message : obj;
+    const rawRole = msgObj.role ?? '';
+    // normalize：v2.1+ 用 'user'，旧格式用 'human'，统一转为 'human'
+    const role = rawRole === 'user' ? 'human' : rawRole;
+    let content = msgObj.content ?? '';
     const timestamp = obj.timestamp ?? '';
 
     // content 可能是数组（多块内容），拍平提取 text 类型块
@@ -295,8 +302,24 @@ async function main() {
   // 第三层：语义级过滤
   messages = layer3SemanticFilter(messages);
 
+  // 自动截断：优先保留 human 消息，将输出控制在 MAX_OUTPUT_KB 以内
+  const CHAR_LIMIT = MAX_OUTPUT_KB * 1024 * 0.8; // 留 20% 给 headers
+  let charCount = 0;
+  const truncated = [];
+  for (const msg of messages) {
+    charCount += msg.content.length;
+    if (charCount > CHAR_LIMIT && truncated.length > 0) break;
+    truncated.push(msg);
+  }
+  if (truncated.length < messages.length) {
+    console.log(
+      `\u2702\ufe0f  自动截断：保留前 ${truncated.length} 条消息（共 ${messages.length} 条），` +
+      `控制输出在 ${MAX_OUTPUT_KB}KB 以内`,
+    );
+  }
+
   // 写入输出
-  writeOutput(messages, OUTPUT_FILE);
+  writeOutput(truncated, OUTPUT_FILE);
 
   // 输出 JSON 摘要供 Claude 解析
   const finalMemory = checkMemoryUsage();

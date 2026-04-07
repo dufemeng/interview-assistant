@@ -2,19 +2,30 @@
 # run.sh — Interview Assistant 一键执行入口
 #
 # 用法：
-#   bash run.sh /path/to/your/project
+#   bash run.sh                                      # 分析当前目录
+#   bash run.sh /path/to/your/project                # 位置参数
+#   bash run.sh --project /path/to/your/project      # 命名参数
 #   bash run.sh /path/to/your/project --days 14 --max-files 10
 #
 # 执行流程：
-#   Step 1 — SessionExtractor: 提取 Claude Code CLI session → extracted_decisions.md
-#   Step 2 — CodeArchitectureAnalyzer: 分析代码结构     → code_summary.md
-#   Step 3 — 打印后续 LLM 步骤指引
+#   Step 1 — SessionExtractor: 提取 Claude Code CLI session → .interview-docs/extracted_decisions.md
+#   Step 2 — CodeArchitectureAnalyzer: 分析代码结构         → .interview-docs/code_summary.md
 
 set -euo pipefail
 
 # ── 参数解析 ──────────────────────────────────────────────────────────────────
-PROJECT_DIR="${1:-}"
-EXTRA_ARGS="${*:2}"   # 透传给 session-extractor.mjs 的额外参数（--days / --max-files）
+PROJECT_DIR=""
+EXTRA_ARGS=""
+# 支持 --project <path> 命名参数和位置参数两种写法
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --project) PROJECT_DIR="$2"; shift 2 ;;
+    --days|--max-files) EXTRA_ARGS="$EXTRA_ARGS $1 $2"; shift 2 ;;
+    --*) shift ;;  # 忽略未知 flag
+    *) [ -z "$PROJECT_DIR" ] && PROJECT_DIR="$1"; shift ;;
+  esac
+done
+EXTRA_ARGS="${EXTRA_ARGS# }"  # 去除首部多余空格
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
@@ -49,6 +60,20 @@ fi
 
 PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"
 
+# ── 检测项目专属 session 目录 ──────────────────────────────────────────────────
+# Claude Code CLI 命名规则：将项目绝对路径的 / 全部替换为 -
+# 例：/Users/foo/my-app → ~/.claude/projects/-Users-foo-my-app/
+PROJECT_SESSION_SUBDIR="$(echo "$PROJECT_DIR" | sed 's|/|-|g')"
+PROJECT_SESSION_DIR="$HOME/.claude/projects/$PROJECT_SESSION_SUBDIR"
+
+if [ -d "$PROJECT_SESSION_DIR" ]; then
+  echo "ℹ️  检测到项目专属 session 目录：$PROJECT_SESSION_DIR"
+  SESSION_DIR_OVERRIDE="$PROJECT_SESSION_DIR"
+else
+  echo "ℹ️  未找到项目专属 session 目录，将从 ~/.claude/projects/ 全局提取"
+  SESSION_DIR_OVERRIDE=""
+fi
+
 # ── 创建输出目录并写入 .gitignore ─────────────────────────────────────────────
 OUTPUT_DIR="$PROJECT_DIR/.interview-docs"
 mkdir -p "$OUTPUT_DIR"
@@ -74,7 +99,7 @@ echo "------------------------------------------------------------"
 echo ""
 
 # shellcheck disable=SC2086
-OUTPUT_FILE="$OUTPUT_DIR/extracted_decisions.md" node "$SCRIPT_DIR/session-extractor.mjs" $EXTRA_ARGS
+SESSION_DIR="$SESSION_DIR_OVERRIDE" OUTPUT_FILE="$OUTPUT_DIR/extracted_decisions.md" node "$SCRIPT_DIR/session-extractor.mjs" $EXTRA_ARGS
 
 if [ ! -f "$OUTPUT_DIR/extracted_decisions.md" ]; then
   echo "❌ extracted_decisions.md 未生成，请检查上方错误信息"
