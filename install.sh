@@ -72,7 +72,7 @@ cat > "$COMMAND_FILE" << 'CLAUDE_CMD'
 
 ## 执行步骤
 
-**输入参数**：`$ARGUMENTS`（项目目录路径，如 `/path/to/my-project`）
+**输入参数**：`$ARGUMENTS`（项目目录路径，如 `/path/to/my-project`；**可选**，不填时自动分析 Claude Code 当前打开的项目目录）
 
 ### Step 1 — 自动提取（运行脚本）
 

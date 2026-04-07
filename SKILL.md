@@ -25,11 +25,11 @@ description: Generates personalized technical interview questions and STAR story
 
 询问用户：
 
-1. **项目目录路径**（必须）：`/path/to/your/project`
+1. **项目目录路径**（可选）：`/path/to/your/project`。如果用户未提供，默认使用当前目录（Claude Code 打开的项目根目录）。
 2. **目标职级**：资深前端 / 全栈工程师 / Agent 工程师
 3. **目标 JD**（可选）：是否有招聘描述文本？
 
-如果用户已在消息里提供了项目路径，直接进入 Step 2。
+如果用户未提供路径，直接进入 Step 2，脚本会自动使用当前目录。
 
 ---
 

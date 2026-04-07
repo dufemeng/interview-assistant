@@ -49,8 +49,13 @@ curl -fsSL https://raw.githubusercontent.com/dufemeng/lm-2026-learning/main/wiki
 在任意项目目录打开 Claude Code CLI，输入：
 
 ```
-/interview-assistant /path/to/your/project
+/interview-assistant
 ```
+
+> 路径参数**可选**。不填时自动分析 Claude Code 当前打开的项目目录。需要分析其他路径时可指定：
+> ```
+> /interview-assistant /path/to/your/project
+> ```
 
 Claude 会自动执行全部 5 个步骤：
 1. **确认输入** — 询问目标职级、JD（可选）

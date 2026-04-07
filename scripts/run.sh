@@ -36,14 +36,10 @@ if [ "$NODE_MAJOR" -lt 18 ]; then
   exit 1
 fi
 
-# 检查项目目录参数
+# 检查项目目录参数（可选；未指定时默认使用当前工作目录）
 if [ -z "$PROJECT_DIR" ]; then
-  echo "用法：bash run.sh /path/to/your/project [--days <N>] [--max-files <N>]"
-  echo ""
-  echo "示例："
-  echo "  bash run.sh ~/projects/my-video-agent"
-  echo "  bash run.sh ~/projects/my-video-agent --days 14 --max-files 10"
-  exit 1
+  PROJECT_DIR="$(pwd)"
+  echo "ℹ️  未指定项目目录，使用当前目录：$PROJECT_DIR"
 fi
 
 if [ ! -d "$PROJECT_DIR" ]; then
