@@ -82,15 +82,15 @@ cat > "$COMMAND_FILE" << 'CLAUDE_CMD'
 bash ~/.claude/skills/interview-assistant/scripts/run.sh $ARGUMENTS
 ```
 
-等待脚本完成，确认生成了 `extracted_decisions.md` 和 `code_summary.md`。
+等待脚本完成，确认生成了 `.interview-docs/extracted_decisions.md` 和 `.interview-docs/code_summary.md`。
 
 ### Step 2 — 构建项目知识图谱
 
-读取 `extracted_decisions.md` 和 `code_summary.md` 的内容，然后严格按照
+读取 `.interview-docs/extracted_decisions.md` 和 `.interview-docs/code_summary.md` 的内容，然后严格按照
 `~/.claude/skills/interview-assistant/references/01-project-knowledge-builder.md` 中的格式要求，
 在**同一次分析**中交叉印证两份文档，输出项目知识图谱。
 
-将结果保存到 `project_knowledge_graph.md`。
+将结果保存到 `.interview-docs/project_knowledge_graph.md`。
 
 ### Step 3 — 生成面试题
 
@@ -101,20 +101,20 @@ bash ~/.claude/skills/interview-assistant/scripts/run.sh $ARGUMENTS
 按照 `~/.claude/skills/interview-assistant/references/02-interview-generator.md` 的格式，
 基于知识图谱中的 TOP5 高价值决策生成面试题。
 
-将结果保存到 `interview_questions.md`。
+将结果保存到 `.interview-docs/interview_questions.md`。
 
 ### Step 4 — 生成 STAR 故事卡
 
 按照 `~/.claude/skills/interview-assistant/references/03-story-card-builder.md` 的格式，
 将 TOP5 决策整理为可直接口述的 STAR 故事卡（每张 200–300 字）。
 
-将结果保存到 `story_cards.md`。
+将结果保存到 `.interview-docs/story_cards.md`。
 
 ### 完成
 
 告知用户：
-- `interview_questions.md` — 定制面试题（20–30 道）
-- `story_cards.md` — STAR 故事卡（5 张，可直接口述）
+- `.interview-docs/interview_questions.md` — 定制面试题（20–30 道）
+- `.interview-docs/story_cards.md` — STAR 故事卡（5 张，可直接口述）
 CLAUDE_CMD
 
 green "✓  Claude Code 斜杠命令已安装：$COMMAND_FILE"

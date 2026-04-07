@@ -11,7 +11,7 @@
 set -euo pipefail
 
 PROJECT_DIR="${1:-.}"
-OUTPUT="code_summary.md"
+OUTPUT="${2:-code_summary.md}"
 
 # 标准化为绝对路径
 PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"

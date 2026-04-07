@@ -49,8 +49,19 @@ fi
 
 PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"
 
+# ── 创建输出目录并写入 .gitignore ─────────────────────────────────────────────
+OUTPUT_DIR="$PROJECT_DIR/.interview-docs"
+mkdir -p "$OUTPUT_DIR"
+
+GITIGNORE="$PROJECT_DIR/.gitignore"
+if ! grep -qxF '.interview-docs/' "$GITIGNORE" 2>/dev/null; then
+  echo '.interview-docs/' >> "$GITIGNORE"
+  echo "ℹ️  已将 .interview-docs/ 加入 $GITIGNORE"
+fi
+
 echo "📋 配置信息："
 echo "   项目目录：$PROJECT_DIR"
+echo "   输出目录：$OUTPUT_DIR"
 echo "   脚本目录：$SCRIPT_DIR"
 echo "   Node.js：$(node --version)"
 echo ""
@@ -58,14 +69,14 @@ echo ""
 # ── Step 1：SessionExtractor ──────────────────────────────────────────────────
 echo "------------------------------------------------------------"
 echo "  Step 1 / 2 — SessionExtractor"
-echo "  从 ~/.claude/projects/ 提取决策对话 → extracted_decisions.md"
+echo "  从 ~/.claude/projects/ 提取决策对话 → .interview-docs/extracted_decisions.md"
 echo "------------------------------------------------------------"
 echo ""
 
 # shellcheck disable=SC2086
-node "$SCRIPT_DIR/session-extractor.mjs" $EXTRA_ARGS
+OUTPUT_FILE="$OUTPUT_DIR/extracted_decisions.md" node "$SCRIPT_DIR/session-extractor.mjs" $EXTRA_ARGS
 
-if [ ! -f "extracted_decisions.md" ]; then
+if [ ! -f "$OUTPUT_DIR/extracted_decisions.md" ]; then
   echo "❌ extracted_decisions.md 未生成，请检查上方错误信息"
   exit 1
 fi
@@ -75,13 +86,13 @@ echo ""
 # ── Step 2：CodeArchitectureAnalyzer ─────────────────────────────────────────
 echo "------------------------------------------------------------"
 echo "  Step 2 / 2 — CodeArchitectureAnalyzer"
-echo "  分析项目代码结构 → code_summary.md"
+echo "  分析项目代码结构 → .interview-docs/code_summary.md"
 echo "------------------------------------------------------------"
 echo ""
 
-bash "$SCRIPT_DIR/code_analyzer.sh" "$PROJECT_DIR"
+bash "$SCRIPT_DIR/code_analyzer.sh" "$PROJECT_DIR" "$OUTPUT_DIR/code_summary.md"
 
-if [ ! -f "code_summary.md" ]; then
+if [ ! -f "$OUTPUT_DIR/code_summary.md" ]; then
   echo "❌ code_summary.md 未生成，请检查上方错误信息"
   exit 1
 fi
@@ -89,15 +100,15 @@ fi
 echo ""
 
 # ── 输出统计 ──────────────────────────────────────────────────────────────────
-decisions_size=$(( $(wc -c < extracted_decisions.md) / 1024 ))
-code_size=$(( $(wc -c < code_summary.md) / 1024 ))
+decisions_size=$(( $(wc -c < "$OUTPUT_DIR/extracted_decisions.md") / 1024 ))
+code_size=$(( $(wc -c < "$OUTPUT_DIR/code_summary.md") / 1024 ))
 total_size=$(( decisions_size + code_size ))
 
 # 检查 extracted_decisions.md 是否有内容（是否有实际消息）
 decisions_has_content=false
 if [ "$decisions_size" -gt 0 ]; then
   # 检查文件是否包含 "用户" 或 "Claude" 标记
-  if grep -q "用户\|Claude\|human\|assistant" extracted_decisions.md 2>/dev/null; then
+  if grep -q "用户\|Claude\|human\|assistant" "$OUTPUT_DIR/extracted_decisions.md" 2>/dev/null; then
     decisions_has_content=true
   fi
 fi
@@ -106,7 +117,7 @@ fi
 code_has_content=false
 if [ "$code_size" -gt 0 ]; then
   # 检查文件是否包含关键部分
-  if grep -q "Directory Structure\|Dependency Stack\|Commit History" code_summary.md 2>/dev/null; then
+  if grep -q "Directory Structure\|Dependency Stack\|Commit History" "$OUTPUT_DIR/code_summary.md" 2>/dev/null; then
     code_has_content=true
   fi
 fi
@@ -116,8 +127,8 @@ echo "  ✅ Extraction Complete!"
 echo "============================================================"
 echo ""
 echo "  Generated files:"
-printf "    %-30s %s KB\n" "extracted_decisions.md" "$decisions_size"
-printf "    %-30s %s KB\n" "code_summary.md" "$code_size"
+printf "    %-30s %s KB\n" ".interview-docs/extracted_decisions.md" "$decisions_size"
+printf "    %-30s %s KB\n" ".interview-docs/code_summary.md" "$code_size"
 echo "                                     ──────"
 printf "    %-30s %s KB (LLM input)\n" "Total" "$total_size"
 echo ""
@@ -148,13 +159,13 @@ cat << EOF
   "project_dir": "$PROJECT_DIR",
   "files": {
     "extracted_decisions": {
-      "path": "extracted_decisions.md",
+      "path": ".interview-docs/extracted_decisions.md",
       "exists": true,
       "size_kb": $decisions_size,
       "has_content": $decisions_has_content
     },
     "code_summary": {
-      "path": "code_summary.md",
+      "path": ".interview-docs/code_summary.md",
       "exists": true,
       "size_kb": $code_size,
       "has_content": $code_has_content

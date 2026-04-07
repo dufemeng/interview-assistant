@@ -42,14 +42,14 @@ bash {SKILL_DIR}/scripts/run.sh <project_path>
 ```
 
 **执行后验证**：
-- 检查脚本输出中的 JSON 结果，确认 `extracted_decisions.md` 和 `code_summary.md` 已生成
+- 检查脚本输出中的 JSON 结果，确认 `.interview-docs/extracted_decisions.md` 和 `.interview-docs/code_summary.md` 已生成
 - 如果 session 数据量很大（>200MB 或提取时间超过 60 秒），建议用户：
   ```bash
   bash {SKILL_DIR}/scripts/run.sh <project_path> --days 14 --max-files 10
   ```
 
 **边界处理**：
-- 若 `extracted_decisions.md` < 5KB：提示用户 "Session 数据较少，知识图谱将主要依赖代码摘要"
+- 若 `.interview-docs/extracted_decisions.md` < 5KB：提示用户 "Session 数据较少，知识图谱将主要依赖代码摘要"
 - 若 `code_summary.md` 未生成：检查项目路径是否正确、项目是否包含可识别文件
 
 ---
@@ -59,8 +59,8 @@ bash {SKILL_DIR}/scripts/run.sh <project_path>
 **自动执行步骤**：
 
 1. **使用 Read 工具读取摘要文件**：
-   - 读取当前目录下的 `extracted_decisions.md`
-   - 读取当前目录下的 `code_summary.md`
+   - 读取 `.interview-docs/extracted_decisions.md`
+   - 读取 `.interview-docs/code_summary.md`
    - 读取 `{SKILL_DIR}/references/01-project-knowledge-builder.md` 获取详细格式要求
 
 2. **交叉印证分析**（在同一次分析中完成）：
@@ -72,7 +72,7 @@ bash {SKILL_DIR}/scripts/run.sh <project_path>
    > 关键原则：必须同时基于两份文档做交叉印证，发现"session 说要做但代码没做"的张力点
 
 3. **使用 Write 工具输出结果**：
-   - 将知识图谱写入 `project_knowledge_graph.md`
+   - 将知识图谱写入 `.interview-docs/project_knowledge_graph.md`
 
 **输出格式要求**（参考 `references/01-project-knowledge-builder.md`）：
 ```markdown
@@ -99,7 +99,7 @@ bash {SKILL_DIR}/scripts/run.sh <project_path>
 **自动执行步骤**：
 
 1. **使用 Read 工具读取输入**：
-   - 读取 `project_knowledge_graph.md`
+   - 读取 `.interview-docs/project_knowledge_graph.md`
    - 读取 `{SKILL_DIR}/references/02-interview-generator.md` 获取详细格式要求
 
 2. **分析并生成面试题**：
@@ -115,7 +115,7 @@ bash {SKILL_DIR}/scripts/run.sh <project_path>
    - ❌ 避免 "什么是闭包" 这类通用八股题
 
 4. **使用 Write 工具输出结果**：
-   - 将面试题写入 `interview_questions.md`
+   - 将面试题写入 `.interview-docs/interview_questions.md`
 
 **输出格式**：每条决策对应一个章节，包含面试题 + 评分要点
 
@@ -126,7 +126,7 @@ bash {SKILL_DIR}/scripts/run.sh <project_path>
 **自动执行步骤**：
 
 1. **使用 Read 工具读取输入**：
-   - 读取 `project_knowledge_graph.md` 中的决策清单
+   - 读取 `.interview-docs/project_knowledge_graph.md` 中的决策清单
    - 读取 `{SKILL_DIR}/references/03-story-card-builder.md` 获取详细格式要求
 
 2. **生成 STAR 故事卡**：
@@ -139,7 +139,7 @@ bash {SKILL_DIR}/scripts/run.sh <project_path>
    - 结果要诚实，不虚构 KPI（未上线可说"验证了 XX 假设"）
 
 4. **使用 Write 工具输出结果**：
-   - 将故事卡写入 `story_cards.md`
+   - 将故事卡写入 `.interview-docs/story_cards.md`
 
 **STAR 格式**：
 - **S（情境）**: 项目背景 + 技术约束
@@ -154,18 +154,18 @@ bash {SKILL_DIR}/scripts/run.sh <project_path>
 使用 Bash 工具验证所有输出文件已生成：
 
 ```bash
-ls -la project_knowledge_graph.md interview_questions.md story_cards.md 2>/dev/null && echo "✅ All files generated successfully" || echo "❌ Some files missing"
+ls -la .interview-docs/project_knowledge_graph.md .interview-docs/interview_questions.md .interview-docs/story_cards.md 2>/dev/null && echo "✅ All files generated successfully" || echo "❌ Some files missing"
 ```
 
 告知用户生成了以下文件：
 
 | 文件 | 内容 | 大小预期 |
 |------|------|----------|
-| `extracted_decisions.md` | Session 决策提炼 | 5–50 KB |
-| `code_summary.md` | 代码架构摘要 | 5–10 KB |
-| `project_knowledge_graph.md` | 技术栈、决策清单、置信度标注 | 10–20 KB |
-| `interview_questions.md` | 20–30 道定制面试题（含追问和评分要点） | 15–30 KB |
-| `story_cards.md` | 5 张 STAR 故事卡（可直接口述） | 5–10 KB |
+| `.interview-docs/extracted_decisions.md` | Session 决策提炼 | 5–50 KB |
+| `.interview-docs/code_summary.md` | 代码架构摘要 | 5–10 KB |
+| `.interview-docs/project_knowledge_graph.md` | 技术栈、决策清单、置信度标注 | 10–20 KB |
+| `.interview-docs/interview_questions.md` | 20–30 道定制面试题（含追问和评分要点） | 15–30 KB |
+| `.interview-docs/story_cards.md` | 5 张 STAR 故事卡（可直接口述） | 5–10 KB |
 
 **后续建议**:
 - 查看 `interview_questions.md` 中的面试题，确认每道题都引用了项目中的具体模块
@@ -197,7 +197,7 @@ interview-assistant/
 
 ## 边界处理
 
-**session 数据稀少**：若 `extracted_decisions.md` < 5KB，提示用户：
+**session 数据稀少**：若 `.interview-docs/extracted_decisions.md` < 5KB，提示用户：
 "Session 内容较少，知识图谱将主要依赖代码摘要，决策置信度标注为 🟡 中。
 建议补充回答：项目最难的技术问题是什么？你主动做了哪些工程化决策？"
 

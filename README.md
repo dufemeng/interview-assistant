@@ -40,13 +40,15 @@ Claude 会自动完成全部步骤，无需手动复制粘贴：
 
 **输出文件：**
 
+所有文件输出到项目的 `.interview-docs/` 目录（已自动加入 `.gitignore`）：
+
 | 文件 | 内容 |
 |------|------|
-| `extracted_decisions.md` | Session 决策提炼（5–50 KB） |
-| `code_summary.md` | 代码架构摘要（5–10 KB） |
-| `project_knowledge_graph.md` | 知识图谱，含置信度标注 |
-| `interview_questions.md` | 20–30 道定制面试题 |
-| `story_cards.md` | 5 张 STAR 故事卡，可直接口述 |
+| `.interview-docs/extracted_decisions.md` | Session 决策提炼（5–50 KB） |
+| `.interview-docs/code_summary.md` | 代码架构摘要（5–10 KB） |
+| `.interview-docs/project_knowledge_graph.md` | 知识图谱，含置信度标注 |
+| `.interview-docs/interview_questions.md` | 20–30 道定制面试题 |
+| `.interview-docs/story_cards.md` | 5 张 STAR 故事卡，可直接口述 |
 
 ---
 
