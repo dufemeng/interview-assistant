@@ -49,9 +49,12 @@ files=(
   "scripts/session-extractor.mjs"
   "scripts/code_analyzer.sh"
   "scripts/run.sh"
+  "scripts/extract_decision_count.sh"
+  "scripts/write_session_header.sh"
   "references/01-project-knowledge-builder.md"
   "references/02-interview-generator.md"
   "references/03-story-card-builder.md"
+  "references/04-mock-interview.md"
   "SKILL.md"
 )
 
@@ -62,59 +65,65 @@ for f in "${files[@]}"; do
 done
 
 # 赋予脚本执行权限
-chmod +x "$INSTALL_DIR/scripts/run.sh" "$INSTALL_DIR/scripts/code_analyzer.sh" 2>/dev/null || true
+chmod +x "$INSTALL_DIR/scripts/run.sh" "$INSTALL_DIR/scripts/code_analyzer.sh" \
+         "$INSTALL_DIR/scripts/extract_decision_count.sh" \
+         "$INSTALL_DIR/scripts/write_session_header.sh" 2>/dev/null || true
 
 # ── 安装 Claude Code CLI 斜杠命令 ─────────────────────────────────────────────
 COMMAND_FILE="$CLAUDE_COMMANDS_DIR/interview-assistant.md"
 
 cat > "$COMMAND_FILE" << 'CLAUDE_CMD'
-你是面试助手（Interview Assistant）。根据工程师的 Claude Code 开发 session 和项目代码，生成定制化面试题和 STAR 故事卡。
+你是面试助手（Interview Assistant）。根据工程师的 Claude Code 开发 session 和项目代码，生成定制化面试题和 STAR 故事卡，然后直接开始模拟面试练习。
 
 ## 执行步骤
 
-**输入参数**：`$ARGUMENTS`（项目目录路径，如 `/path/to/my-project`；**可选**，不填时自动分析 Claude Code 当前打开的项目目录）
+**输入参数**：`$ARGUMENTS`（项目目录路径，可选）
 
-### Step 1 — 自动提取（运行脚本）
-
-运行以下命令：
+### Step 1 — 自动提取
 
 ```bash
 bash ~/.claude/skills/interview-assistant/scripts/run.sh $ARGUMENTS
 ```
 
-等待脚本完成，确认生成了 `.interview-docs/extracted_decisions.md` 和 `.interview-docs/code_summary.md`。
+确认生成了 `.interview-docs/extracted_decisions.md` 和 `.interview-docs/code_summary.md`。
 
-### Step 2 — 构建项目知识图谱
+检查 `.interview-docs/interview_questions.md` 是否存在：
+- **存在** → 询问「检测到之前的分析结果，直接开始面试还是重新分析？」
+  - 选「直接开始」→ 执行 `bash ~/.claude/skills/interview-assistant/scripts/extract_decision_count.sh`，捕获 DECISION_COUNT=D，跳到 Step 3
+  - 选「重新分析」→ 继续 Step 2
+- **不存在** → 继续 Step 2
 
-读取 `.interview-docs/extracted_decisions.md` 和 `.interview-docs/code_summary.md` 的内容，然后严格按照
-`~/.claude/skills/interview-assistant/references/01-project-knowledge-builder.md` 中的格式要求，
-在**同一次分析**中交叉印证两份文档，输出项目知识图谱。
+### Step 2 — 分析与准备
 
-将结果保存到 `.interview-docs/project_knowledge_graph.md`。
+询问用户目标职级和 JD（可选），然后串行执行：
 
-### Step 3 — 生成面试题
+**2a** — 按照 `~/.claude/skills/interview-assistant/references/01-project-knowledge-builder.md` 的格式，交叉印证两份文档生成知识图谱，保存到 `.interview-docs/project_knowledge_graph.md`。告知「✅ 知识图谱已生成，正在生成面试题...」
 
-询问用户：
-- 目标职级（资深前端 / 全栈工程师 / Agent 工程师）
-- 是否有目标 JD（有则粘贴）
+**2b** — 按照 `~/.claude/skills/interview-assistant/references/02-interview-generator.md` 的格式，基于 TOP D 高价值决策生成面试题（每决策 5 道），保存到 `.interview-docs/interview_questions.md`。告知「✅ 面试题已生成，正在生成故事卡...」
 
-按照 `~/.claude/skills/interview-assistant/references/02-interview-generator.md` 的格式，
-基于知识图谱中的 TOP5 高价值决策生成面试题。
+**2c** — 按照 `~/.claude/skills/interview-assistant/references/03-story-card-builder.md` 的格式，生成 STAR 故事卡，保存到 `.interview-docs/story_cards.md`。告知「✅ 故事卡已生成」
 
-将结果保存到 `.interview-docs/interview_questions.md`。
+**2d** — 提取决策总数：
+```bash
+bash ~/.claude/skills/interview-assistant/scripts/extract_decision_count.sh
+```
+捕获输出中的 `DECISION_COUNT=D`，告知「分析完毕，共 D 个决策，开始面试？」
 
-### Step 4 — 生成 STAR 故事卡
+### Step 3 — 模拟面试
 
-按照 `~/.claude/skills/interview-assistant/references/03-story-card-builder.md` 的格式，
-将 TOP5 决策整理为可直接口述的 STAR 故事卡（每张 200–300 字）。
+写入会话头：
+```bash
+bash ~/.claude/skills/interview-assistant/scripts/write_session_header.sh
+```
 
-将结果保存到 `.interview-docs/story_cards.md`。
+然后读取并严格遵守 `~/.claude/skills/interview-assistant/references/04-mock-interview.md` 中的全部规则开始面试。每个决策完成后追加评分：
+```bash
+bash ~/.claude/skills/interview-assistant/scripts/write_session_header.sh --append-decision --decision "决策标题" --score "评分"
+```
 
-### 完成
+### Step 4 — 面试总结
 
-告知用户：
-- `.interview-docs/interview_questions.md` — 定制面试题（20–30 道）
-- `.interview-docs/story_cards.md` — STAR 故事卡（5 张，可直接口述）
+生成总结（总题数、评分分布、强项、需加强、复习推荐），追加写入 `.interview-docs/mock_interview_summary.md`。
 CLAUDE_CMD
 
 green "✓  Claude Code 斜杠命令已安装：$COMMAND_FILE"

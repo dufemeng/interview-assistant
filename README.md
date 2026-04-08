@@ -1,6 +1,6 @@
 # 面试助手（Interview Assistant）
 
-基于你用 Claude Code 开发项目时留下的 session 记录和代码，生成**只有你能答的面试题**和 STAR 故事卡。不是八股题库，是锚定在你真实架构决策上的定制题目。
+基于你用 Claude Code 开发项目时留下的 session 记录和代码，直接开始**交互式模拟面试**——Claude 扮演面试官逐题提问，你回答后立即获得评分、改进建议和完美答案。不是生成一堆文件让你自己复习，而是直接练起来。
 
 ---
 
@@ -16,8 +16,6 @@ curl -fsSL https://raw.githubusercontent.com/dufemeng/lm-2026-learning/main/wiki
 
 ## 使用
 
-### 方式一：Claude Code CLI（推荐）
-
 在项目目录下打开 Claude Code，输入：
 
 ```
@@ -30,58 +28,45 @@ curl -fsSL https://raw.githubusercontent.com/dufemeng/lm-2026-learning/main/wiki
 /interview-assistant /path/to/your/project
 ```
 
-Claude 会自动完成全部步骤，无需手动复制粘贴：
+整个过程分 4 步，Claude 全程驱动：
 
-1. 询问目标职级和 JD（可选）
-2. 运行脚本提取 session 决策 + 代码摘要
-3. 生成项目知识图谱（含置信度标注）
-4. 生成 20–30 道定制面试题
-5. 生成 5 张 STAR 格式故事卡
+1. **自动提取**：运行脚本提取 session 决策 + 代码摘要
+2. **分析与准备**：询问目标职级和 JD → 生成知识图谱、定制面试题、STAR 故事卡
+3. **模拟面试**：Claude 扮演面试官逐题提问 → 你回答 → 立即评分（A/B/C）+ 反馈 + 完美答案
+4. **面试总结**：强项分析 + 需要加强的点 + 指向具体文件的复习推荐
 
-**输出文件：**
-
-所有文件输出到项目的 `.interview-docs/` 目录（已自动加入 `.gitignore`）：
-
-| 文件 | 内容 |
-|------|------|
-| `.interview-docs/extracted_decisions.md` | Session 决策提炼（5–50 KB） |
-| `.interview-docs/code_summary.md` | 代码架构摘要（5–10 KB） |
-| `.interview-docs/project_knowledge_graph.md` | 知识图谱，含置信度标注 |
-| `.interview-docs/interview_questions.md` | 20–30 道定制面试题 |
-| `.interview-docs/story_cards.md` | 5 张 STAR 故事卡，可直接口述 |
+**再次练习时**：直接开始，Claude 检测到已有分析结果，跳过 Step 2 直接进入面试。
 
 ---
 
-### 方式二：单独运行提取脚本
+## 输出文件
 
-只做 session 提取和代码分析（不生成面试题），适合先检查提取结果再让 Claude 处理：
+所有文件输出到项目的 `.interview-docs/` 目录（已自动加入 `.gitignore`）：
 
-```bash
-# 分析当前目录
-bash ~/.claude/skills/interview-assistant/scripts/run.sh
-
-# 指定目录
-bash ~/.claude/skills/interview-assistant/scripts/run.sh /path/to/your/project
-
-# session 数据量大时缩减范围（默认 30 天 / 最多 20 个文件）
-bash ~/.claude/skills/interview-assistant/scripts/run.sh /path/to/your/project --days 14 --max-files 10
-```
+| 文件 | 生成时机 | 内容 |
+|------|----------|------|
+| `extracted_decisions.md` | Step 1（脚本） | Session 决策提炼 |
+| `code_summary.md` | Step 1（脚本） | 代码架构摘要 |
+| `project_knowledge_graph.md` | Step 2 | 知识图谱，含置信度标注 |
+| `interview_questions.md` | Step 2 | 定制面试题 + 评分要点 |
+| `story_cards.md` | Step 2 | STAR 故事卡，可直接口述 |
+| `mock_interview_summary.md` | Step 3（增量写入）| 每次面试的评分记录 + 总结 |
 
 ---
 
 ## 常见情况
 
 **session 数据很少（< 5 KB）**  
-知识图谱会主要依赖代码摘要，决策置信度会偏低。可在 `extracted_decisions.md` 末尾手动补充：项目最难的技术问题、你主动做的工程化决策、最想推翻的选择。
+知识图谱主要依赖代码摘要，决策置信度会偏低。
 
 **session 总量超过 200 MB**  
-加 `--days 14 --max-files 10` 缩减范围，或只保留最活跃阶段的 session。
+运行脚本时加参数缩减范围：
+```bash
+bash ~/.claude/skills/interview-assistant/scripts/run.sh /path/to/project --days 14 --max-files 10
+```
 
-**没有 git 历史**  
-代码摘要会跳过提交历史节，其余正常生成。
-
-**没有 `~/.claude/projects/` 目录**  
-说明 Claude Code CLI 尚未使用过，session 部分会为空，只能基于代码分析。
+**没有 git 历史 / 没有 `~/.claude/projects/` 目录**  
+代码摘要跳过 git 历史节，session 为空时只基于代码分析，其余正常运行。
 
 ---
 
@@ -91,8 +76,3 @@ bash ~/.claude/skills/interview-assistant/scripts/run.sh /path/to/your/project -
 curl -fsSL https://raw.githubusercontent.com/dufemeng/lm-2026-learning/main/wiki/skills/interview-assistant/install.sh | bash
 ```
 
----
-
-## 详细设计
-
-架构图、组件详细设计、关键设计决策见 [DESIGN.md](DESIGN.md)。

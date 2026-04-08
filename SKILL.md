@@ -1,13 +1,13 @@
 ---
 name: interview-assistant
-description: Generates personalized technical interview questions and STAR story cards from a user's Claude Code CLI session history and project codebase. Use this skill whenever a user wants to prepare for a technical interview, especially when they built a project using Claude Code or other AI-assisted tools. Trigger on phrases like "帮我准备面试", "面试准备", "面试题", "help me prepare for my interview", "generate interview questions about my project", "turn my work into interview stories", "I have an interview next week about my project", or any time someone wants to talk about their engineering decisions in an interview context. Don't wait for explicit mention of "Claude Code" — if someone built a project and needs interview prep, use this skill.
+description: Generates personalized technical interview questions and STAR story cards from a user's Claude Code CLI session history and project codebase, then runs an interactive mock interview with real-time scoring and feedback. Use this skill whenever a user wants to prepare for a technical interview, especially when they built a project using Claude Code or other AI-assisted tools. Trigger on phrases like "帮我准备面试", "面试准备", "面试题", "模拟面试", "help me prepare for my interview", "generate interview questions about my project", "turn my work into interview stories", "I have an interview next week about my project", or any time someone wants to talk about their engineering decisions in an interview context. Don't wait for explicit mention of "Claude Code" — if someone built a project and needs interview prep, use this skill.
 ---
 
 # Interview Assistant
 
-根据工程师的 Claude Code CLI session 历史和项目代码，生成定制化面试题和 STAR 故事卡。
+根据工程师的 Claude Code CLI session 历史和项目代码，生成定制化面试题和 STAR 故事卡，然后直接开始交互式模拟面试。
 
-核心价值：生成**"只有你能答的题"**——题目锚定在你的真实架构决策上，而不是通用八股题库。
+核心价值：**被提问 → 尝试回答 → 立即获得评分和完美答案**——不是生成一堆文件让你自己复习，而是直接练起来。
 
 ---
 
@@ -36,144 +36,91 @@ bash {SKILL_DIR}/scripts/run.sh /path/to/your/project
 ```
 
 **执行后验证**：
-- 检查脚本输出中的 JSON 结果，确认 `.interview-docs/extracted_decisions.md` 和 `.interview-docs/code_summary.md` 已生成
-- 如果 session 数据量很大（>200MB 或提取时间超过 60 秒），建议用户：
-  ```bash
-  bash {SKILL_DIR}/scripts/run.sh --days 14 --max-files 10
-  ```
-
-**边界处理**：
+- 检查脚本输出，确认 `.interview-docs/extracted_decisions.md` 和 `.interview-docs/code_summary.md` 已生成
 - 若 `.interview-docs/extracted_decisions.md` < 5KB：提示用户 "Session 数据较少，知识图谱将主要依赖代码摘要"
-- 若 `.interview-docs/code_summary.md` 未生成：检查项目路径是否正确、项目是否包含可识别文件
+
+**重复练习检测**：脚本完成后检查 `.interview-docs/interview_questions.md` 是否存在：
+- **存在** → 询问用户：「检测到之前的分析结果，直接开始面试还是重新分析？」
+  - 选「直接开始」→ 执行 `bash {SKILL_DIR}/scripts/extract_decision_count.sh` 获取 D，**跳到 Step 3**
+  - 选「重新分析」→ 继续 Step 2
+- **不存在** → 继续 Step 2
 
 ---
 
-### Step 2 — 确认目标
+### Step 2 — 分析与准备
 
 询问用户：
 
 1. **目标职级**：资深前端 / 全栈工程师 / Agent 工程师
 2. **目标 JD**（可选）：是否有招聘描述文本？
 
----
+然后**串行**执行以下步骤（每步完成后告知用户进度）：
 
-### Step 3 — 构建项目知识图谱
+**2a — 构建项目知识图谱**
 
-**自动执行步骤**：
+读取 `.interview-docs/extracted_decisions.md`、`.interview-docs/code_summary.md` 和 `{SKILL_DIR}/references/01-project-knowledge-builder.md`，交叉印证两份文档生成知识图谱，保存到 `.interview-docs/project_knowledge_graph.md`。
 
-1. **使用 Read 工具读取摘要文件**：
-   - 读取 `.interview-docs/extracted_decisions.md`
-   - 读取 `.interview-docs/code_summary.md`
-   - 读取 `{SKILL_DIR}/references/01-project-knowledge-builder.md` 获取详细格式要求
+告知用户：「✅ 知识图谱已生成，正在生成面试题...」
 
-2. **交叉印证分析**（在同一次分析中完成）：
-   - 列出技术栈与架构模式
-   - 提取至少 5 条关键架构决策（含置信度标注 🟢🟡🔴）
-   - 识别 "Gap（说了没做）" / "孤岛（做了没说）" / "方案变更"
-   - 按技术域分类（架构层/数据层/Agent层/工程化层/性能层）
+**2b — 生成面试题**
 
-   > 关键原则：必须同时基于两份文档做交叉印证，发现"session 说要做但代码没做"的张力点
+读取 `.interview-docs/project_knowledge_graph.md` 和 `{SKILL_DIR}/references/02-interview-generator.md`，基于 TOP D 高价值决策（优先 🟢 高置信度）每条生成 5 道题（基础确认题×1、深度追问题×3、扩展场景题×1）+ 评分要点（✅期待听到 / ❌警惕信号），保存到 `.interview-docs/interview_questions.md`。
 
-3. **使用 Write 工具输出结果**：
-   - 将知识图谱写入 `.interview-docs/project_knowledge_graph.md`
+告知用户：「✅ 面试题已生成，正在生成故事卡...」
 
-**输出格式要求**（参考 `references/01-project-knowledge-builder.md`）：
-```markdown
-# 项目知识图谱
+**2c — 生成 STAR 故事卡**
 
-## 1. 技术栈与架构模式
-- 技术名称 + 选型讨论（session 是否有提及）+ 代码实现状态
+读取 `.interview-docs/project_knowledge_graph.md` 和 `{SKILL_DIR}/references/03-story-card-builder.md`，将 TOP D 决策整理为可直接口述的 STAR 故事卡（每张 200–300 字），保存到 `.interview-docs/story_cards.md`。
 
-## 2. 关键架构决策清单（≥5条）
-每条包含：决策描述、背景、取舍、置信度（🟢高/🟡中/🔴低）
+告知用户：「✅ 故事卡已生成」
 
-## 3. 交叉印证发现
-- Gap: session 提到但代码未实现
-- 孤岛: 代码有但 session 未讨论
-- 方案变更: 思路转变痕迹
-
-## 4. 技术域分布表
-```
-
----
-
-### Step 4 — 生成面试题
-
-**自动执行步骤**：
-
-1. **使用 Read 工具读取输入**：
-   - 读取 `.interview-docs/project_knowledge_graph.md`
-   - 读取 `{SKILL_DIR}/references/02-interview-generator.md` 获取详细格式要求
-
-2. **分析并生成面试题**：
-   - 识别 TOP5 高价值决策（优先选择 🟢 高置信度决策）
-   - 每条决策生成 5 道面试题：
-     - 基础确认题 × 1（验证候选人真实经历该决策）
-     - 深度追问题 × 3（技术选型、可靠性边界、取舍与反思）
-     - 扩展场景题 × 1（架构演进能力）
-
-3. **质量检查**（强制执行）：
-   - ✅ 每道题必须引用项目中的具体模块名或技术选型
-   - ✅ 追问要问 "为什么选 A 不选 B"，不能问 "A 是什么"
-   - ❌ 避免 "什么是闭包" 这类通用八股题
-
-4. **使用 Write 工具输出结果**：
-   - 将面试题写入 `.interview-docs/interview_questions.md`
-
-**输出格式**：每条决策对应一个章节，包含面试题 + 评分要点
-
----
-
-### Step 5 — 生成 STAR 故事卡
-
-**自动执行步骤**：
-
-1. **使用 Read 工具读取输入**：
-   - 读取 `.interview-docs/project_knowledge_graph.md` 中的决策清单
-   - 读取 `{SKILL_DIR}/references/03-story-card-builder.md` 获取详细格式要求
-
-2. **生成 STAR 故事卡**：
-   - 将 TOP5 决策整理为可直接口述的 STAR 故事卡
-   - 每张卡片 200–300 字，第一人称，适合口述（约 90–120 秒）
-
-3. **写作要求**（强制执行）：
-   - 语言自然口语化，避免书面体（"我当时..." 而非 "本项目旨在..."）
-   - 必须包含具体细节：模块名、技术名称、数据量级
-   - 结果要诚实，不虚构 KPI（未上线可说"验证了 XX 假设"）
-
-4. **使用 Write 工具输出结果**：
-   - 将故事卡写入 `.interview-docs/story_cards.md`
-
-**STAR 格式**：
-- **S（情境）**: 项目背景 + 技术约束
-- **T（任务）**: 需要解决的具体技术问题
-- **A（行动）**: 考虑过哪些方案 → 选了什么 → 为什么
-- **R（结果）**: 效果、学到什么、如果重来怎么做
-
----
-
-### 完成
-
-使用 Bash 工具验证所有输出文件已生成：
+**2d — 提取决策总数**
 
 ```bash
-ls -la .interview-docs/project_knowledge_graph.md .interview-docs/interview_questions.md .interview-docs/story_cards.md 2>/dev/null && echo "✅ All files generated successfully" || echo "❌ Some files missing"
+bash {SKILL_DIR}/scripts/extract_decision_count.sh
 ```
 
-告知用户生成了以下文件：
+捕获输出中的 `DECISION_COUNT=D`，记录 D 值。
 
-| 文件 | 内容 | 大小预期 |
-|------|------|----------|
-| `.interview-docs/extracted_decisions.md` | Session 决策提炼 | 5–50 KB |
-| `.interview-docs/code_summary.md` | 代码架构摘要 | 5–10 KB |
-| `.interview-docs/project_knowledge_graph.md` | 技术栈、决策清单、置信度标注 | 10–20 KB |
-| `.interview-docs/interview_questions.md` | 20–30 道定制面试题（含追问和评分要点） | 15–30 KB |
-| `.interview-docs/story_cards.md` | 5 张 STAR 故事卡（可直接口述） | 5–10 KB |
+告知用户：「分析完毕，共 D 个决策，开始面试？」
 
-**后续建议**:
-- 查看 `interview_questions.md` 中的面试题，确认每道题都引用了项目中的具体模块
-- 使用 `story_cards.md` 中的卡片进行模拟面试练习
-- 如果某些决策的置信度为 🔴 低，建议在实际面试中谨慎提及或补充更多细节
+---
+
+### Step 3 — 模拟面试
+
+**开始前先写入会话头：**
+
+```bash
+bash {SKILL_DIR}/scripts/write_session_header.sh
+```
+
+然后读取并严格遵守 `{SKILL_DIR}/references/04-mock-interview.md` 中的全部规则，开始模拟面试：
+
+1. 暖场题（不评分，不计入进度）
+2. 按置信度顺序逐决策提问
+3. 每题评分（A/B/C）并给出对应反馈
+4. 每个决策完成后追加写入评分记录：
+   ```bash
+   bash {SKILL_DIR}/scripts/write_session_header.sh --append-decision --decision "决策标题" --score "评分"
+   ```
+5. 询问「已完成第 M 个决策（共 D 个），已问 N 题，继续还是结束？」
+
+---
+
+### Step 4 — 面试总结
+
+面试结束后，生成完整总结并追加写入 `.interview-docs/mock_interview_summary.md`：
+
+```
+## 模拟面试总结
+
+**总题数**：X 题
+**评分分布**：A × N / B × N / C × N
+
+### 强项 / 需要加强 / 建议复习（指向具体故事卡和面试题编号）
+```
+
+告知用户所有输出文件位置。
 
 ---
 
@@ -182,29 +129,30 @@ ls -la .interview-docs/project_knowledge_graph.md .interview-docs/interview_ques
 ```
 interview-assistant/
 ├── SKILL.md              ← 本文件（skill 定义）
-├── README.md             ← 详细设计文档
-├── install.sh            ← curl 一键安装脚本
+├── README.md             ← 使用说明
+├── install.sh            ← 一键安装脚本
 ├── scripts/
-│   ├── session-extractor.mjs  ← Step 2：三层过滤提取 session 决策对话
-│   ├── code_analyzer.sh       ← Step 2：提取代码架构摘要
-│   └── run.sh                 ← Step 2：编排入口
+│   ├── session-extractor.mjs       ← 三层过滤提取 session 决策对话
+│   ├── code_analyzer.sh            ← 提取代码架构摘要
+│   ├── run.sh                      ← 编排入口
+│   ├── extract_decision_count.sh   ← 提取决策总数 D
+│   └── write_session_header.sh     ← 写入会话头 / 追加评分记录
 ├── references/
-│   ├── 01-project-knowledge-builder.md  ← Step 3 Prompt 模板
-│   ├── 02-interview-generator.md         ← Step 4 Prompt 模板
-│   └── 03-story-card-builder.md          ← Step 5 Prompt 模板
+│   ├── 01-project-knowledge-builder.md  ← Step 2a Prompt 模板
+│   ├── 02-interview-generator.md         ← Step 2b Prompt 模板
+│   ├── 03-story-card-builder.md          ← Step 2c Prompt 模板
+│   └── 04-mock-interview.md              ← Step 3 面试官行为准则
 └── evals/
-    └── evals.json        ← skill-creator 测试用例
+    └── evals.json
 ```
 
 ---
 
 ## 边界处理
 
-**session 数据稀少**：若 `.interview-docs/extracted_decisions.md` < 5KB，提示用户：
-"Session 内容较少，知识图谱将主要依赖代码摘要，决策置信度标注为 🟡 中。
-建议补充回答：项目最难的技术问题是什么？你主动做了哪些工程化决策？"
+**session 数据稀少**：若 `.interview-docs/extracted_decisions.md` < 5KB，提示用户 "Session 数据较少，知识图谱将主要依赖代码摘要"。
 
 **无 git 仓库**：`code_summary.md` 中 git 历史为空，跳过该节，其余正常处理。
 
-**session 目录不存在**：提示用户确认 Claude Code CLI 已安装并使用过
-（`~/.claude/projects/` 目录需存在）。
+**session 目录不存在**：提示用户确认 Claude Code CLI 已安装并使用过（`~/.claude/projects/` 目录需存在）。
+
