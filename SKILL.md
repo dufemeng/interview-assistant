@@ -109,18 +109,20 @@ bash {SKILL_DIR}/scripts/write_session_header.sh
 
 ### Step 4 — 面试总结
 
-面试结束后，生成完整总结并追加写入 `.interview-docs/mock_interview_summary.md`：
+面试结束后，生成完整总结并通过 Bash 工具追加写入 `.interview-docs/mock_interview_summary.md`：
 
-```
+```bash
+bash -c 'cat >> .interview-docs/mock_interview_summary.md' << 'SUMMARY_END'
 ## 模拟面试总结
 
 **总题数**：X 题
 **评分分布**：A × N / B × N / C × N
 
 ### 强项 / 需要加强 / 建议复习（指向具体故事卡和面试题编号）
+SUMMARY_END
 ```
 
-告知用户所有输出文件位置。
+将以上模板中的占位内容更换为实际总结后执行。告知用户所有输出文件位置。
 
 ---
 

@@ -12,8 +12,8 @@ if [[ ! -f "$QUESTIONS_FILE" ]]; then
   exit 0
 fi
 
-# 匹配以 ## 开头的决策章节标题（排除 # 总标题行）
-# interview_questions.md 格式：每个决策用 ## 决策N: 标题 开头
-D=$(grep -c '^## ' "$QUESTIONS_FILE" 2>/dev/null || echo 0)
+# 匹配 `### 决策 N：` 格式的章节标题（02-interview-generator.md 强制输出此格式）
+# 使用精确模式避免误匹配元数据行（如 ## 目标职级：...）
+D=$(grep -c '^### 决策 [0-9]' "$QUESTIONS_FILE" 2>/dev/null || echo 0)
 
 echo "DECISION_COUNT=$D"

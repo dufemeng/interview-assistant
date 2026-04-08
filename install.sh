@@ -123,7 +123,7 @@ bash ~/.claude/skills/interview-assistant/scripts/write_session_header.sh --appe
 
 ### Step 4 — 面试总结
 
-生成总结（总题数、评分分布、强项、需加强、复习推荐），追加写入 `.interview-docs/mock_interview_summary.md`。
+生成总结（总题数、评分分布、强项、需加强、复习推荐），通过 Bash heredoc 追加写入 `.interview-docs/mock_interview_summary.md`。
 CLAUDE_CMD
 
 green "✓  Claude Code 斜杠命令已安装：$COMMAND_FILE"
